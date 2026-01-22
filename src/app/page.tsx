@@ -1,6 +1,6 @@
 import { Bar } from '@/components/Bar/Bar';
 import { CenterBlock } from '@/components/CenterBlock/CenterBlock';
-import { Nav } from '@/components/Nav/Nav';
+import { Navigation } from '@/components/Navigation/Navigation';
 import { Sidebar } from '@/components/Sidebar/Sidebar';
 
 export default function Home() {
@@ -8,12 +8,11 @@ export default function Home() {
     <div className="wrapper">
       <div className="container">
         <main className="main">
-          <Nav />
+          <Navigation />
           <CenterBlock />
           <Sidebar />
         </main>
         <Bar />
-        <footer className="footer"></footer>
       </div>
     </div>
   );

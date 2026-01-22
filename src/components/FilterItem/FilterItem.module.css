@@ -1,0 +1,20 @@
+.filter__buttonContainer {
+  position: relative;
+}
+
+.filter__button {
+  font-style: normal;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+  border: 1px solid #ffffff;
+  border-radius: 60px;
+  padding: 6px 20px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.filter__button.active {
+  border-color: #ad61ff;
+  color: #ad61ff;
+}
