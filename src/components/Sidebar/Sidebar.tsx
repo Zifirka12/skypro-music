@@ -1,3 +1,5 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import styles from './Sidebar.module.css';
@@ -13,38 +15,40 @@ export const Sidebar = () => {
           </svg>
         </div>
       </div>
+
       <div className={styles.sidebar__block}>
         <div className={styles.sidebar__list}>
           <div className={styles.sidebar__item}>
             <Link href="#" className={styles.sidebar__link}>
               <Image
-                className={styles.sidebar__img}
                 src="/img/playlist01.png"
                 alt="day's playlist"
                 width={250}
                 height={150}
+                className={styles.sidebar__img}
+                priority
               />
             </Link>
           </div>
           <div className={styles.sidebar__item}>
             <Link href="#" className={styles.sidebar__link}>
               <Image
-                className={styles.sidebar__img}
                 src="/img/playlist02.png"
                 alt="day's playlist"
                 width={250}
                 height={150}
+                className={styles.sidebar__img}
               />
             </Link>
           </div>
           <div className={styles.sidebar__item}>
             <Link href="#" className={styles.sidebar__link}>
               <Image
-                className={styles.sidebar__img}
                 src="/img/playlist03.png"
                 alt="day's playlist"
                 width={250}
                 height={150}
+                className={styles.sidebar__img}
               />
             </Link>
           </div>

@@ -1,4 +1,8 @@
+'use client';
+
 import { Track as TrackType } from '@/components/sharedTypes/track';
+import { setCurrentTrack } from '@/store/features/trackSlice';
+import { useAppDispatch, useAppSelector } from '@/store/store';
 import { formatTime } from '@/utils/time';
 import Link from 'next/link';
 import styles from './Track.module.css';
@@ -9,6 +13,17 @@ interface TrackProps {
 }
 
 export const Track = ({ track, isHeader = false }: TrackProps) => {
+  const dispatch = useAppDispatch();
+  const currentTrack = useAppSelector((state) => state.tracks.currentTrack);
+  const isPlaying = useAppSelector((state) => state.tracks.isPlaying);
+  const isActive = currentTrack?._id === track?._id;
+
+  const handleTrackClick = () => {
+    if (track) {
+      dispatch(setCurrentTrack(track));
+    }
+  };
+
   if (isHeader) {
     return (
       <div className={styles.playlist__item}>
@@ -35,10 +50,18 @@ export const Track = ({ track, isHeader = false }: TrackProps) => {
   }
 
   return (
-    <div className={styles.playlist__item}>
+    <div
+      className={`${styles.playlist__item} ${isActive ? styles.active : ''}`}
+      onClick={handleTrackClick}
+    >
       <div className={styles.playlist__track}>
         <div className={styles.track__title}>
           <div className={styles.track__titleImage}>
+            {isActive && (
+              <div
+                className={`${styles.track__playingDot} ${isPlaying ? styles.playing : ''}`}
+              ></div>
+            )}
             <svg className={styles.track__titleSvg}>
               <use xlinkHref="/img/icon/sprite.svg#icon-note"></use>
             </svg>
