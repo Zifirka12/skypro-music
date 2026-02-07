@@ -1,16 +1,47 @@
 'use client';
 
-import { setIsPlaying, togglePlayPause } from '@/store/features/trackSlice';
+import {
+  playNextTrack,
+  playPrevTrack,
+  setCurrentTime,
+  setDuration,
+  setIsPlaying,
+  setVolume,
+  togglePlayPause,
+  toggleRepeat,
+  toggleShuffle,
+} from '@/store/features/trackSlice';
 import { useAppDispatch, useAppSelector } from '@/store/store';
 import cn from 'classnames';
 import { useEffect, useRef } from 'react';
 import styles from './Bar.module.css';
+
+// Функция для форматирования времени в формат MM:SS
+const formatTime = (seconds: number): string => {
+  if (isNaN(seconds) || seconds < 0) return '0:00';
+
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+};
 
 export const Bar = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const dispatch = useAppDispatch();
   const currentTrack = useAppSelector((state) => state.tracks.currentTrack);
   const isPlaying = useAppSelector((state) => state.tracks.isPlaying);
+  const isShuffled = useAppSelector((state) => state.tracks.isShuffled);
+  const isRepeating = useAppSelector((state) => state.tracks.isRepeating);
+  const volume = useAppSelector((state) => state.tracks.volume);
+  const currentTime = useAppSelector((state) => state.tracks.currentTime);
+  const duration = useAppSelector((state) => state.tracks.duration);
+
+  // Управление громкостью
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.volume = volume;
+  }, [volume]);
 
   // Обрабатываем только play/pause для текущего трека
   useEffect(() => {
@@ -28,7 +59,7 @@ export const Bar = () => {
     } else {
       audio.pause();
     }
-  }, [isPlaying, dispatch]);
+  }, [isPlaying, dispatch, currentTrack]);
 
   // Загружаем новый трек только когда меняется currentTrack
   useEffect(() => {
@@ -49,44 +80,92 @@ export const Bar = () => {
       dispatch(setIsPlaying(false));
     };
 
-    const handleLoadStart = () => {
-      // Трек начал загружаться
+    const handleTimeUpdate = () => {
+      dispatch(setCurrentTime(audio.currentTime));
     };
 
-    const handleLoadedData = () => {
-      if (isPlaying) {
-        audio.play().catch((error) => {
-          console.error('Ошибка воспроизведения:', error);
-          dispatch(setIsPlaying(false));
-        });
-      }
+    const handleLoadedMetadata = () => {
+      dispatch(setDuration(audio.duration));
     };
 
     // Добавляем обработчики
     audio.addEventListener('canplay', handleCanPlay);
     audio.addEventListener('error', handleError);
-    audio.addEventListener('loadstart', handleLoadStart);
-    audio.addEventListener('loadeddata', handleLoadedData);
+    audio.addEventListener('timeupdate', handleTimeUpdate);
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
 
-    // Загружаем новый трек только если это действительно новый трек
-    if (audio.src !== currentTrack.track_file) {
-      audio.src = currentTrack.track_file;
-      audio.load();
-    }
+    // Загружаем новый трек
+    audio.src = currentTrack.track_file;
+    audio.load();
 
     // Очищаем обработчики при размонтировании
     return () => {
       audio.removeEventListener('canplay', handleCanPlay);
       audio.removeEventListener('error', handleError);
-      audio.removeEventListener('loadstart', handleLoadStart);
-      audio.removeEventListener('loadeddata', handleLoadedData);
+      audio.removeEventListener('timeupdate', handleTimeUpdate);
+      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
     };
-  }, [currentTrack, dispatch]);
+  }, [currentTrack, dispatch, isPlaying]);
+
+  // Отдельный useEffect для обработки события ended
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !currentTrack) return;
+
+    const handleEnded = () => {
+      // Если включен режим повтора, начинаем трек заново
+      if (isRepeating) {
+        audio.currentTime = 0;
+        audio.play().catch((error) => {
+          console.error('Ошибка воспроизведения:', error);
+        });
+      } else {
+        // Автоматически переключаемся на следующий трек
+        dispatch(playNextTrack());
+      }
+    };
+
+    audio.addEventListener('ended', handleEnded);
+
+    return () => {
+      audio.removeEventListener('ended', handleEnded);
+    };
+  }, [currentTrack, dispatch, isRepeating]);
 
   const handlePlayPause = () => {
     if (currentTrack) {
       dispatch(togglePlayPause());
     }
+  };
+
+  const handlePrevTrack = () => {
+    dispatch(playPrevTrack());
+  };
+
+  const handleNextTrack = () => {
+    dispatch(playNextTrack());
+  };
+
+  const handleShuffle = () => {
+    dispatch(toggleShuffle());
+  };
+
+  const handleRepeat = () => {
+    dispatch(toggleRepeat());
+  };
+
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newVolume = parseFloat(e.target.value);
+    dispatch(setVolume(newVolume));
+  };
+
+  const handleProgressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const audio = audioRef.current;
+    if (!audio || !duration) return;
+
+    const newTime = parseFloat(e.target.value);
+    audio.currentTime = newTime;
+    dispatch(setCurrentTime(newTime));
   };
 
   const handleNotImplemented = () => {
@@ -96,14 +175,35 @@ export const Bar = () => {
   return (
     <div className={styles.bar}>
       <div className={styles.bar__content}>
-        <div className={styles.bar__playerProgress}></div>
+        <div className={styles.bar__playerProgress}>
+          <div className={styles.progressContainer}>
+            <input
+              type="range"
+              min="0"
+              max={duration || 0}
+              step="0.1"
+              value={currentTime || 0}
+              onChange={handleProgressChange}
+              className={styles.progressBar}
+              style={{
+                '--progress-percent': duration ? `${(currentTime / duration) * 100}%` : '0%'
+              } as React.CSSProperties}
+            />
+          </div>
+          <div className={styles.progressTime}>
+            <span className={styles.progressTimeLeft}>
+              {formatTime(currentTime)}
+            </span>
+            <span className={styles.progressTimeDivider}> / </span>
+            <span className={styles.progressTimeRight}>
+              {formatTime(duration)}
+            </span>
+          </div>
+        </div>
         <div className={styles.bar__playerBlock}>
           <div className={styles.bar__player}>
             <div className={styles.player__controls}>
-              <div
-                className={styles.player__btnPrev}
-                onClick={handleNotImplemented}
-              >
+              <div className={styles.player__btnPrev} onClick={handlePrevTrack}>
                 <svg className={styles.player__btnPrevSvg}>
                   <use xlinkHref="/img/icon/sprite.svg#icon-prev"></use>
                 </svg>
@@ -122,25 +222,26 @@ export const Bar = () => {
                   ></use>
                 </svg>
               </div>
-              <div
-                className={styles.player__btnNext}
-                onClick={handleNotImplemented}
-              >
+              <div className={styles.player__btnNext} onClick={handleNextTrack}>
                 <svg className={styles.player__btnNextSvg}>
                   <use xlinkHref="/img/icon/sprite.svg#icon-next"></use>
                 </svg>
               </div>
               <div
-                className={cn(styles.player__btnRepeat, styles.btnIcon)}
-                onClick={handleNotImplemented}
+                className={cn(styles.player__btnRepeat, styles.btnIcon, {
+                  [styles.active]: isRepeating,
+                })}
+                onClick={handleRepeat}
               >
                 <svg className={styles.player__btnRepeatSvg}>
                   <use xlinkHref="/img/icon/sprite.svg#icon-repeat"></use>
                 </svg>
               </div>
               <div
-                className={cn(styles.player__btnShuffle, styles.btnIcon)}
-                onClick={handleNotImplemented}
+                className={cn(styles.player__btnShuffle, styles.btnIcon, {
+                  [styles.active]: isShuffled,
+                })}
+                onClick={handleShuffle}
               >
                 <svg className={styles.player__btnShuffleSvg}>
                   <use xlinkHref="/img/icon/sprite.svg#icon-shuffle"></use>
@@ -197,6 +298,11 @@ export const Bar = () => {
                   className={cn(styles.volume__progressLine, styles.btn)}
                   type="range"
                   name="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={volume}
+                  onChange={handleVolumeChange}
                 />
               </div>
             </div>
