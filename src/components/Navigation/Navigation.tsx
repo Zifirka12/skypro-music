@@ -1,16 +1,36 @@
 'use client';
 
+import { logout, restoreAuth } from '@/store/features/authSlice';
+import { useAppDispatch, useAppSelector } from '@/store/store';
 import cn from 'classnames';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import styles from './Navigation.module.css';
 
 export const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false); // ← ДОБАВИТЬ эту строку
+  const dispatch = useAppDispatch();
+  const router = useRouter();
+  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+
+  // Восстанавливаем авторизацию из localStorage после монтирования
+  useEffect(() => {
+    setIsClient(true);
+    dispatch(restoreAuth());
+  }, [dispatch]);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+  };
+
+  const handleLogout = () => {
+    setIsLoggingOut(true);
+    dispatch(logout());
+    router.push('/signin');
   };
 
   return (
@@ -45,11 +65,22 @@ export const Navigation = () => {
               Мой плейлист
             </Link>
           </li>
-          <li className={styles.menu__item}>
-            <Link href="/signin" className={styles.menu__link}>
-              Войти
-            </Link>
-          </li>
+          {!isLoggingOut && isClient && isAuthenticated ? (
+            <li className={styles.menu__item}>
+              <button onClick={handleLogout} className={styles.menu__link}>
+                Выйти
+              </button>
+            </li>
+          ) : (
+            !isLoggingOut &&
+            isClient && (
+              <li className={styles.menu__item}>
+                <Link href="/signin" className={styles.menu__link}>
+                  Войти
+                </Link>
+              </li>
+            )
+          )}
         </ul>
       </div>
     </nav>

@@ -185,9 +185,13 @@ export const Bar = () => {
               value={currentTime || 0}
               onChange={handleProgressChange}
               className={styles.progressBar}
-              style={{
-                '--progress-percent': duration ? `${(currentTime / duration) * 100}%` : '0%'
-              } as React.CSSProperties}
+              style={
+                {
+                  '--progress-percent': duration
+                    ? `${(currentTime / duration) * 100}%`
+                    : '0%',
+                } as React.CSSProperties
+              }
             />
           </div>
           <div className={styles.progressTime}>

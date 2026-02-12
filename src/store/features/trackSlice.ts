@@ -1,5 +1,6 @@
 import { Track } from '@/components/sharedTypes/track';
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
+import { getAllTracks } from '@/api/tracksApi';
 
 type InitialStateType = {
   currentTrack: Track | null;
@@ -11,6 +12,8 @@ type InitialStateType = {
   volume: number;
   currentTime: number;
   duration: number;
+  isLoading: boolean;
+  error: string | null;
 };
 
 const initialState: InitialStateType = {
@@ -23,7 +26,22 @@ const initialState: InitialStateType = {
   volume: 0.5, // Громкость по умолчанию 50%
   currentTime: 0,
   duration: 0,
+  isLoading: false,
+  error: null,
 };
+
+// Асинхронная загрузка всех треков
+export const fetchAllTracks = createAsyncThunk(
+  'tracks/fetchAll',
+  async (_, { rejectWithValue }) => {
+    try {
+      const tracks = await getAllTracks();
+      return tracks;
+    } catch (error) {
+      return rejectWithValue((error as Error).message);
+    }
+  },
+);
 
 // Функция для перемешивания массива (алгоритм Fisher-Yates)
 const shuffleArray = (array: Track[]): Track[] => {
@@ -129,6 +147,25 @@ const trackSlice = createSlice({
       }
       // Если это первый трек - ничего не делаем
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchAllTracks.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchAllTracks.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.playlist = action.payload;
+        if (state.isShuffled) {
+          state.shuffledPlaylist = shuffleArray(action.payload);
+        }
+        state.error = null;
+      })
+      .addCase(fetchAllTracks.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = (action.payload as string) || 'Ошибка загрузки треков';
+      });
   },
 });
 

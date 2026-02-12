@@ -71,3 +71,22 @@
   font-size: 16px;
   line-height: 24px;
 }
+.menu__user {
+  color: #ffffff;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.menu__link[type='button'],
+button.menu__link {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+
+.menu__link:hover {
+  color: #acacac;
+}

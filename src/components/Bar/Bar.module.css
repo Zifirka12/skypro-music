@@ -57,7 +57,13 @@
 
 .progressBar::-webkit-slider-runnable-track {
   height: 5px;
-  background: linear-gradient(to right, #b672ff 0%, #b672ff var(--progress-percent, 0%), #2e2e2e var(--progress-percent, 0%), #2e2e2e 100%);
+  background: linear-gradient(
+    to right,
+    #b672ff 0%,
+    #b672ff var(--progress-percent, 0%),
+    #2e2e2e var(--progress-percent, 0%),
+    #2e2e2e 100%
+  );
 }
 
 .progressBar::-moz-range-thumb {
