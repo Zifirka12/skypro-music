@@ -148,6 +148,12 @@ const authSlice = createSlice({
       state.isAuthenticated = true;
       saveTokens(action.payload.access, action.payload.refresh);
     },
+    setAccessToken: (state, action: PayloadAction<string>) => {
+      state.accessToken = action.payload;
+      if (state.refreshToken) {
+        saveTokens(action.payload, state.refreshToken);
+      }
+    },
     setUser: (state, action: PayloadAction<User>) => {
       state.user = action.payload;
       saveUser(action.payload);
@@ -259,6 +265,7 @@ const authSlice = createSlice({
 export const {
   restoreAuth,
   setTokens,
+  setAccessToken,
   setUser,
   logout,
   clearError,

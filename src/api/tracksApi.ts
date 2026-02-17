@@ -54,11 +54,11 @@ export async function getFavoriteTracks(accessToken: string): Promise<Track[]> {
 
 // Добавление трека в избранное (требует авторизацию)
 export async function addTrackToFavorite(
-  id: number,
   accessToken: string,
+  trackId: number,
 ): Promise<Track> {
   const response = await fetch(
-    `${API_BASE_URL}/catalog/track/${id}/favorite/`,
+    `${API_BASE_URL}/catalog/track/${trackId}/favorite/`,
     {
       method: 'POST',
       headers: {
@@ -77,11 +77,11 @@ export async function addTrackToFavorite(
 
 // Удаление трека из избранного (требует авторизацию)
 export async function removeTrackFromFavorite(
-  id: number,
   accessToken: string,
+  trackId: number,
 ): Promise<void> {
   const response = await fetch(
-    `${API_BASE_URL}/catalog/track/${id}/favorite/`,
+    `${API_BASE_URL}/catalog/track/${trackId}/favorite/`,
     {
       method: 'DELETE',
       headers: {

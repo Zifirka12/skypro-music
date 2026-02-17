@@ -1,11 +1,12 @@
-import { Track } from '@/components/sharedTypes/track';
-import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { getAllTracks } from '@/api/tracksApi';
+import { Track } from '@/components/sharedTypes/track';
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 type InitialStateType = {
   currentTrack: Track | null;
   isPlaying: boolean;
   playlist: Track[];
+  favoriteTracks: Track[];
   isShuffled: boolean;
   shuffledPlaylist: Track[];
   isRepeating: boolean;
@@ -20,6 +21,7 @@ const initialState: InitialStateType = {
   currentTrack: null,
   isPlaying: false,
   playlist: [],
+  favoriteTracks: [],
   isShuffled: false,
   shuffledPlaylist: [],
   isRepeating: false,
@@ -147,6 +149,26 @@ const trackSlice = createSlice({
       }
       // Если это первый трек - ничего не делаем
     },
+    setFavoriteTracks: (state, action: PayloadAction<Track[]>) => {
+      state.favoriteTracks = action.payload;
+    },
+    addLikedTrack: (state, action: PayloadAction<Track>) => {
+      // Проверяем, что трек еще не добавлен
+      const exists = state.favoriteTracks.some(
+        (track) => track._id === action.payload._id,
+      );
+      if (!exists) {
+        state.favoriteTracks.push(action.payload);
+      }
+    },
+    removeLikedTrack: (state, action: PayloadAction<Track>) => {
+      state.favoriteTracks = state.favoriteTracks.filter(
+        (track) => track._id !== action.payload._id,
+      );
+    },
+    clearFavoriteTracks: (state) => {
+      state.favoriteTracks = [];
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -181,5 +203,9 @@ export const {
   setDuration,
   playNextTrack,
   playPrevTrack,
+  setFavoriteTracks,
+  addLikedTrack,
+  removeLikedTrack,
+  clearFavoriteTracks,
 } = trackSlice.actions;
 export const trackSliceReducer = trackSlice.reducer;

@@ -1,8 +1,9 @@
 'use client';
 
-import { fetchAllTracks } from '@/store/features/trackSlice';
+import { fetchAllTracks, setFavoriteTracks } from '@/store/features/trackSlice';
 import { useAppDispatch, useAppSelector } from '@/store/store';
-import { useEffect } from 'react';
+import { getFavoriteTracks } from '@/api/tracksApi';
+import { useEffect, useMemo } from 'react';
 import { Filter } from '../Filter/Filter';
 import { Search } from '../Search/Search';
 import { Track } from '../Track/Track';
@@ -10,8 +11,11 @@ import styles from './CenterBlock.module.css';
 
 export const CenterBlock = () => {
   const dispatch = useAppDispatch();
-  const { playlist, isLoading, error } = useAppSelector(
+  const { playlist, isLoading, error, favoriteTracks } = useAppSelector(
     (state) => state.tracks,
+  );
+  const { accessToken, isAuthenticated } = useAppSelector(
+    (state) => state.auth,
   );
 
   // Загружаем треки с сервера при монтировании компонента
@@ -19,8 +23,27 @@ export const CenterBlock = () => {
     dispatch(fetchAllTracks());
   }, [dispatch]);
 
-  // Проверяем, что playlist — это массив
-  const tracks = Array.isArray(playlist) ? playlist : [];
+  // Загружаем избранные треки только если они еще не загружены
+  useEffect(() => {
+    const loadFavoriteTracks = async () => {
+      if (isAuthenticated && accessToken && favoriteTracks.length === 0) {
+        try {
+          const tracks = await getFavoriteTracks(accessToken);
+          dispatch(setFavoriteTracks(tracks));
+        } catch (error) {
+          console.error('Ошибка загрузки избранных треков:', error);
+        }
+      }
+    };
+
+    loadFavoriteTracks();
+  }, [isAuthenticated, accessToken, dispatch, favoriteTracks.length]);
+
+  // Мемоизируем проверку и преобразование playlist в массив
+  const tracks = useMemo(
+    () => (Array.isArray(playlist) ? playlist : []),
+    [playlist],
+  );
 
   return (
     <div className={styles.centerblock}>

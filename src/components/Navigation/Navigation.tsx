@@ -1,12 +1,13 @@
 'use client';
 
 import { logout, restoreAuth } from '@/store/features/authSlice';
+import { clearFavoriteTracks } from '@/store/features/trackSlice';
 import { useAppDispatch, useAppSelector } from '@/store/store';
 import cn from 'classnames';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import styles from './Navigation.module.css';
 
 export const Navigation = () => {
@@ -23,15 +24,18 @@ export const Navigation = () => {
     dispatch(restoreAuth());
   }, [dispatch]);
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
+  // Мемоизируем обработчик переключения меню
+  const toggleMenu = useCallback(() => {
+    setIsMenuOpen((prev) => !prev);
+  }, []);
 
-  const handleLogout = () => {
+  // Мемоизируем обработчик выхода
+  const handleLogout = useCallback(() => {
     setIsLoggingOut(true);
-    dispatch(logout());
-    router.push('/signin');
-  };
+    dispatch(clearFavoriteTracks()); // Очищаем избранные треки
+    dispatch(logout()); // Выходим из аккаунта
+    router.push('/');
+  }, [dispatch, router]);
 
   return (
     <nav className={styles.main__nav}>
@@ -60,11 +64,13 @@ export const Navigation = () => {
               Главное
             </Link>
           </li>
-          <li className={styles.menu__item}>
-            <Link href="/my-playlist" className={styles.menu__link}>
-              Мой плейлист
-            </Link>
-          </li>
+          {isClient && isAuthenticated && (
+            <li className={styles.menu__item}>
+              <Link href="/my-playlist" className={styles.menu__link}>
+                Мой плейлист
+              </Link>
+            </li>
+          )}
           {!isLoggingOut && isClient && isAuthenticated ? (
             <li className={styles.menu__item}>
               <button onClick={handleLogout} className={styles.menu__link}>

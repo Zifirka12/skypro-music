@@ -1,13 +1,14 @@
 'use client';
 
 import { logout, restoreAuth } from '@/store/features/authSlice';
+import { clearFavoriteTracks } from '@/store/features/trackSlice';
 import { useAppDispatch, useAppSelector } from '@/store/store';
 import { getAllSelections } from '@/api/selectionsApi';
 import { SelectionFromApi } from '@/types/selection';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import styles from './Sidebar.module.css';
 
 export const Sidebar = () => {
@@ -42,11 +43,13 @@ export const Sidebar = () => {
     loadSelections();
   }, [dispatch]);
 
-  const handleLogout = () => {
+  // Мемоизируем обработчик выхода
+  const handleLogout = useCallback(() => {
     setIsLoggingOut(true);
-    dispatch(logout());
-    router.push('/signin');
-  };
+    dispatch(clearFavoriteTracks()); // Очищаем избранные треки
+    dispatch(logout()); // Выходим из аккаунта
+    router.push('/'); // Перенаправляем на главную
+  }, [dispatch, router]);
 
   // Маппинг изображений к подборкам (первые 3)
   const playlistImages = [

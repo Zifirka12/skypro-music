@@ -1,12 +1,12 @@
 'use client';
 
 import { getSelectionById } from '@/api/selectionsApi';
-import { getAllTracks } from '@/api/tracksApi';
+import { getAllTracks, getFavoriteTracks } from '@/api/tracksApi';
 import styles from '@/components/CenterBlock/CenterBlock.module.css';
 import { MainLayout } from '@/components/MainLayout/MainLayout';
 import { Track } from '@/components/Track/Track';
-import { setPlaylist } from '@/store/features/trackSlice';
-import { useAppDispatch } from '@/store/store';
+import { setFavoriteTracks, setPlaylist } from '@/store/features/trackSlice';
+import { useAppDispatch, useAppSelector } from '@/store/store';
 import { Selection } from '@/types/selection';
 import { use, useEffect, useState } from 'react';
 
@@ -17,6 +17,10 @@ export default function SelectionPage({
 }) {
   const resolvedParams = use(params);
   const dispatch = useAppDispatch();
+  const { accessToken, isAuthenticated } = useAppSelector(
+    (state) => state.auth,
+  );
+  const { favoriteTracks } = useAppSelector((state) => state.tracks);
   const [selection, setSelection] = useState<Selection | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -67,6 +71,23 @@ export default function SelectionPage({
 
     loadSelection();
   }, [resolvedParams.id, dispatch]);
+
+  // Загружаем избранные треки только один раз при монтировании, если авторизованы
+  useEffect(() => {
+    const loadFavoriteTracks = async () => {
+      if (isAuthenticated && accessToken && favoriteTracks.length === 0) {
+        try {
+          const tracks = await getFavoriteTracks(accessToken);
+          dispatch(setFavoriteTracks(tracks));
+        } catch (error) {
+          console.error('Ошибка загрузки избранных треков:', error);
+        }
+      }
+    };
+
+    loadFavoriteTracks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, accessToken, dispatch]);
 
   return (
     <MainLayout>

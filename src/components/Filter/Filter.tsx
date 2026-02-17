@@ -1,7 +1,7 @@
 'use client';
 
 import { data } from '@/app/data';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { FilterItem } from '../FilterItem/FilterItem';
 import styles from './Filter.module.css';
 
@@ -27,11 +27,16 @@ export const Filter = () => {
     return genres;
   }, []);
 
-  const handleFilterClick = (filterType: string) => {
-    setActiveFilter(activeFilter === filterType ? null : filterType);
-  };
+  // Мемоизируем обработчик клика
+  const handleFilterClick = useCallback(
+    (filterType: string) => {
+      setActiveFilter(activeFilter === filterType ? null : filterType);
+    },
+    [activeFilter],
+  );
 
-  const renderFilterList = () => {
+  // Мемоизируем список фильтров
+  const renderFilterList = useMemo(() => {
     if (!activeFilter) {
       return null;
     }
@@ -61,7 +66,7 @@ export const Filter = () => {
         ))}
       </div>
     );
-  };
+  }, [activeFilter, uniqueAuthors, uniqueYears, uniqueGenres]);
 
   return (
     <div className={styles.centerblock__filter}>
@@ -73,7 +78,7 @@ export const Filter = () => {
           isActive={activeFilter === 'author'}
           onFilterClick={handleFilterClick}
         >
-          {activeFilter === 'author' && renderFilterList()}
+          {activeFilter === 'author' && renderFilterList}
         </FilterItem>
         <FilterItem
           label="году выпуска"
@@ -81,7 +86,7 @@ export const Filter = () => {
           isActive={activeFilter === 'year'}
           onFilterClick={handleFilterClick}
         >
-          {activeFilter === 'year' && renderFilterList()}
+          {activeFilter === 'year' && renderFilterList}
         </FilterItem>
         <FilterItem
           label="жанру"
@@ -89,7 +94,7 @@ export const Filter = () => {
           isActive={activeFilter === 'genre'}
           onFilterClick={handleFilterClick}
         >
-          {activeFilter === 'genre' && renderFilterList()}
+          {activeFilter === 'genre' && renderFilterList}
         </FilterItem>
       </div>
     </div>
