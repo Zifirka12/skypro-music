@@ -1,6 +1,21 @@
+'use client';
+
+import { useCallback } from 'react';
 import styles from './Search.module.css';
 
-export const Search = () => {
+interface SearchProps {
+  value: string;
+  onChange: (value: string) => void;
+}
+
+export const Search = ({ value, onChange }: SearchProps) => {
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      onChange(e.target.value);
+    },
+    [onChange],
+  );
+
   return (
     <div className={styles.centerblock__search}>
       <svg className={styles.search__svg}>
@@ -11,6 +26,8 @@ export const Search = () => {
         type="search"
         placeholder="Поиск"
         name="search"
+        value={value}
+        onChange={handleChange}
       />
     </div>
   );

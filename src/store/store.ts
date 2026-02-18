@@ -21,8 +21,8 @@ export const makeStore = () => {
 export type AppStore = ReturnType<typeof makeStore>;
 
 // Infer the `RootState` and `AppDispatch` types from the store itself
-type RootState = ReturnType<AppStore['getState']>;
-type AppDispatch = AppStore['dispatch'];
+export type RootState = ReturnType<AppStore['getState']>;
+export type AppDispatch = AppStore['dispatch'];
 
 // Use throughout your app instead of plain `useDispatch` and `useSelector`
 export const useAppDispatch: () => AppDispatch = useDispatch;

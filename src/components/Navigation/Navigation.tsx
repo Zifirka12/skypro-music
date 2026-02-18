@@ -1,8 +1,8 @@
 'use client';
 
-import { logout, restoreAuth } from '@/store/features/authSlice';
-import { clearFavoriteTracks } from '@/store/features/trackSlice';
+import { restoreAuth } from '@/store/features/authSlice';
 import { useAppDispatch, useAppSelector } from '@/store/store';
+import { handleLogout } from '@/utils/logout';
 import cn from 'classnames';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -13,7 +13,7 @@ import styles from './Navigation.module.css';
 export const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false); // ← ДОБАВИТЬ эту строку
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const dispatch = useAppDispatch();
   const router = useRouter();
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
@@ -30,11 +30,9 @@ export const Navigation = () => {
   }, []);
 
   // Мемоизируем обработчик выхода
-  const handleLogout = useCallback(() => {
+  const handleLogoutClick = useCallback(() => {
     setIsLoggingOut(true);
-    dispatch(clearFavoriteTracks()); // Очищаем избранные треки
-    dispatch(logout()); // Выходим из аккаунта
-    router.push('/');
+    handleLogout(dispatch, router);
   }, [dispatch, router]);
 
   return (
@@ -73,7 +71,7 @@ export const Navigation = () => {
           )}
           {!isLoggingOut && isClient && isAuthenticated ? (
             <li className={styles.menu__item}>
-              <button onClick={handleLogout} className={styles.menu__link}>
+              <button onClick={handleLogoutClick} className={styles.menu__link}>
                 Выйти
               </button>
             </li>

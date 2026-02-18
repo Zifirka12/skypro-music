@@ -60,39 +60,43 @@ async function handleResponse<T>(response: Response): Promise<T> {
 }
 
 // Регистрация пользователя
-export async function signUp(data: SignUpRequest): Promise<SignUpResponse> {
+export async function signUp(
+  signUpData: SignUpRequest,
+): Promise<SignUpResponse> {
   const response = await fetch(`${API_BASE_URL}/user/signup/`, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify(signUpData),
   });
 
   return handleResponse<SignUpResponse>(response);
 }
 
 // Вход в систему
-export async function login(data: LoginRequest): Promise<LoginResponse> {
+export async function login(loginData: LoginRequest): Promise<LoginResponse> {
   const response = await fetch(`${API_BASE_URL}/user/login/`, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify(loginData),
   });
 
   return handleResponse<LoginResponse>(response);
 }
 
 // Получение токенов (access и refresh)
-export async function getTokens(data: TokenRequest): Promise<TokenResponse> {
+export async function getTokens(
+  tokenData: TokenRequest,
+): Promise<TokenResponse> {
   const response = await fetch(`${API_BASE_URL}/user/token/`, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify(tokenData),
   });
 
   return handleResponse<TokenResponse>(response);
@@ -100,14 +104,14 @@ export async function getTokens(data: TokenRequest): Promise<TokenResponse> {
 
 // Обновление access токена
 export async function refreshToken(
-  data: RefreshTokenRequest,
+  refreshTokenData: RefreshTokenRequest,
 ): Promise<RefreshTokenResponse> {
   const response = await fetch(`${API_BASE_URL}/user/token/refresh/`, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify(refreshTokenData),
   });
 
   return handleResponse<RefreshTokenResponse>(response);

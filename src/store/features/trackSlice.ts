@@ -1,5 +1,5 @@
 import { getAllTracks } from '@/api/tracksApi';
-import { Track } from '@/components/sharedTypes/track';
+import { Track } from '@/types/track';
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 type InitialStateType = {
@@ -106,6 +106,11 @@ const trackSlice = createSlice({
         ? state.shuffledPlaylist
         : state.playlist;
 
+      // Если перемешанный плейлист пустой, но shuffle включен, создаем его
+      if (state.isShuffled && state.shuffledPlaylist.length === 0) {
+        state.shuffledPlaylist = shuffleArray(state.playlist);
+      }
+
       // Если нет текущего трека, начинаем с первого
       if (!state.currentTrack) {
         state.currentTrack = currentPlaylist[0];
@@ -116,6 +121,13 @@ const trackSlice = createSlice({
       const currentIndex = currentPlaylist.findIndex(
         (track) => track._id === state.currentTrack?._id,
       );
+
+      // Если текущий трек не найден в перемешанном плейлисте, начинаем с начала
+      if (currentIndex === -1 && state.isShuffled) {
+        state.currentTrack = currentPlaylist[0];
+        state.isPlaying = true;
+        return;
+      }
 
       // Если текущий трек найден и это не последний трек
       if (currentIndex !== -1 && currentIndex < currentPlaylist.length - 1) {
@@ -131,6 +143,11 @@ const trackSlice = createSlice({
         ? state.shuffledPlaylist
         : state.playlist;
 
+      // Если перемешанный плейлист пустой, но shuffle включен, создаем его
+      if (state.isShuffled && state.shuffledPlaylist.length === 0) {
+        state.shuffledPlaylist = shuffleArray(state.playlist);
+      }
+
       // Если нет текущего трека, начинаем с последнего
       if (!state.currentTrack) {
         state.currentTrack = currentPlaylist[currentPlaylist.length - 1];
@@ -141,6 +158,13 @@ const trackSlice = createSlice({
       const currentIndex = currentPlaylist.findIndex(
         (track) => track._id === state.currentTrack?._id,
       );
+
+      // Если текущий трек не найден в перемешанном плейлисте, начинаем с конца
+      if (currentIndex === -1 && state.isShuffled) {
+        state.currentTrack = currentPlaylist[currentPlaylist.length - 1];
+        state.isPlaying = true;
+        return;
+      }
 
       // Если текущий трек найден и это не первый трек
       if (currentIndex > 0) {

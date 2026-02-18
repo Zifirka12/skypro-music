@@ -67,9 +67,15 @@
   color: #ffffff;
   cursor: pointer;
   transition: color 0.3s ease;
+  padding: 4px 0;
 }
 
 .filter__item:hover {
   color: #b672ff;
+  text-decoration: underline;
+}
+
+.filter__itemActive {
+  color: #ad61ff;
   text-decoration: underline;
 }

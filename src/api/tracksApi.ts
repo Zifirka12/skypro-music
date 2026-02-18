@@ -1,4 +1,4 @@
-import { Track } from '@/components/sharedTypes/track';
+import { Track } from '@/types/track';
 
 const API_BASE_URL = 'https://webdev-music-003b5b991590.herokuapp.com';
 

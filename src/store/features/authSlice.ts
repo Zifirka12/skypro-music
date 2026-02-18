@@ -75,9 +75,9 @@ const initialState: AuthState = {
 // Асинхронные thunks
 export const signUpAsync = createAsyncThunk(
   'auth/signUp',
-  async (data: SignUpRequest, { rejectWithValue }) => {
+  async (signUpData: SignUpRequest, { rejectWithValue }) => {
     try {
-      const response = await signUp(data);
+      const response = await signUp(signUpData);
       return response;
     } catch (error) {
       return rejectWithValue((error as Error).message);
@@ -87,9 +87,9 @@ export const signUpAsync = createAsyncThunk(
 
 export const loginAsync = createAsyncThunk(
   'auth/login',
-  async (data: LoginRequest, { rejectWithValue }) => {
+  async (loginData: LoginRequest, { rejectWithValue }) => {
     try {
-      const response = await login(data);
+      const response = await login(loginData);
       return response;
     } catch (error) {
       return rejectWithValue((error as Error).message);
@@ -99,9 +99,9 @@ export const loginAsync = createAsyncThunk(
 
 export const getTokensAsync = createAsyncThunk(
   'auth/getTokens',
-  async (data: TokenRequest, { rejectWithValue }) => {
+  async (tokenData: TokenRequest, { rejectWithValue }) => {
     try {
-      const response = await getTokens(data);
+      const response = await getTokens(tokenData);
       return response;
     } catch (error) {
       return rejectWithValue((error as Error).message);
@@ -111,9 +111,9 @@ export const getTokensAsync = createAsyncThunk(
 
 export const refreshTokenAsync = createAsyncThunk(
   'auth/refreshToken',
-  async (data: RefreshTokenRequest, { rejectWithValue }) => {
+  async (refreshTokenData: RefreshTokenRequest, { rejectWithValue }) => {
     try {
-      const response = await refreshToken(data);
+      const response = await refreshToken(refreshTokenData);
       return response;
     } catch (error) {
       return rejectWithValue((error as Error).message);

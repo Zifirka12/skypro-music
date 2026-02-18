@@ -1,5 +1,6 @@
 'use client';
 
+import { useLikeTrack } from '@/hooks/useLikeTrack';
 import {
   playNextTrack,
   playPrevTrack,
@@ -12,19 +13,11 @@ import {
   toggleShuffle,
 } from '@/store/features/trackSlice';
 import { useAppDispatch, useAppSelector } from '@/store/store';
-import { useLikeTrack } from '@/hooks/useLikeTrack';
+import { handleAudioPlayError } from '@/utils/audioErrorHandler';
+import { formatTime } from '@/utils/time';
 import cn from 'classnames';
-import { useEffect, useRef, useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import styles from './Bar.module.css';
-
-// Функция для форматирования времени в формат MM:SS
-const formatTime = (seconds: number): string => {
-  if (isNaN(seconds) || seconds < 0) return '0:00';
-
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = Math.floor(seconds % 60);
-  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-};
 
 export const Bar = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -55,8 +48,7 @@ export const Bar = () => {
       // Проверяем, что аудио готово к воспроизведению
       if (audio.readyState >= 2) {
         audio.play().catch((error) => {
-          console.error('Ошибка воспроизведения:', error);
-          dispatch(setIsPlaying(false));
+          handleAudioPlayError(error, dispatch);
         });
       }
     } else {
@@ -72,14 +64,12 @@ export const Bar = () => {
     const handleCanPlay = () => {
       if (isPlaying) {
         audio.play().catch((error) => {
-          console.error('Ошибка воспроизведения:', error);
-          dispatch(setIsPlaying(false));
+          handleAudioPlayError(error, dispatch);
         });
       }
     };
 
     const handleError = (e: Event) => {
-      console.error('Ошибка загрузки аудио для трека:', currentTrack.name);
       dispatch(setIsPlaying(false));
     };
 
@@ -120,7 +110,7 @@ export const Bar = () => {
       if (isRepeating) {
         audio.currentTime = 0;
         audio.play().catch((error) => {
-          console.error('Ошибка воспроизведения:', error);
+          handleAudioPlayError(error, dispatch);
         });
       } else {
         // Автоматически переключаемся на следующий трек
@@ -181,10 +171,6 @@ export const Bar = () => {
   const handleLikeClick = useCallback(() => {
     toggleLike();
   }, [toggleLike]);
-
-  const handleDislikeClick = useCallback(() => {
-    alert('Функция дизлайка еще не реализована');
-  }, []);
 
   return (
     <div className={styles.bar}>
@@ -284,27 +270,19 @@ export const Bar = () => {
                   </a>
                 </div>
               </div>
-              <div className={styles.trackPlay__dislike}>
-                <div
-                  className={cn(styles.trackPlay__likeBtn, styles.btnIcon, {
-                    [styles.liked]: isLike,
-                    [styles.loading]: isLoading,
-                  })}
-                  onClick={handleLikeClick}
-                  title={isLike ? 'Удалить из избранного' : 'Добавить в избранное'}
-                >
-                  <svg className={styles.trackPlay__likeSvg}>
-                    <use xlinkHref="/img/icon/sprite.svg#icon-like"></use>
-                  </svg>
-                </div>
-                <div
-                  className={cn(styles.trackPlay__dislikeBtn, styles.btnIcon)}
-                  onClick={handleDislikeClick}
-                >
-                  <svg className={styles.trackPlay__dislikeSvg}>
-                    <use xlinkHref="/img/icon/sprite.svg#icon-dislike"></use>
-                  </svg>
-                </div>
+              <div
+                className={cn(styles.trackPlay__likeBtn, styles.btnIcon, {
+                  [styles.liked]: isLike,
+                  [styles.loading]: isLoading,
+                })}
+                onClick={handleLikeClick}
+                title={
+                  isLike ? 'Удалить из избранного' : 'Добавить в избранное'
+                }
+              >
+                <svg className={styles.trackPlay__likeSvg}>
+                  <use xlinkHref="/img/icon/sprite.svg#icon-like"></use>
+                </svg>
               </div>
             </div>
           </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { Track as TrackType } from '@/components/sharedTypes/track';
+import { Track as TrackType } from '@/types/track';
 import { setCurrentTrack } from '@/store/features/trackSlice';
 import { useAppDispatch, useAppSelector } from '@/store/store';
 import { formatTime } from '@/utils/time';
@@ -19,14 +19,16 @@ const TrackComponent = ({ track, isHeader = false }: TrackProps) => {
   const dispatch = useAppDispatch();
   const currentTrack = useAppSelector((state) => state.tracks.currentTrack);
   const isPlaying = useAppSelector((state) => state.tracks.isPlaying);
-  
+
   // Мемоизируем проверку активности трека
   const isActive = useMemo(
     () => currentTrack?._id === track?._id,
     [currentTrack?._id, track?._id],
   );
 
-  const { toggleLike, isLike, isLoading, errorMsg } = useLikeTrack(track || null);
+  const { toggleLike, isLike, isLoading, errorMsg } = useLikeTrack(
+    track || null,
+  );
 
   // Мемоизируем обработчик клика по треку
   const handleTrackClick = useCallback(() => {

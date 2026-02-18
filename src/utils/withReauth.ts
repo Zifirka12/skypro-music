@@ -26,9 +26,7 @@ export const withReauth = async <T>(
     if (isUnauthorized) {
       try {
         // Обновляем токен через Redux thunk
-        const result = await dispatch(
-          refreshTokenAsync({ refresh }),
-        ).unwrap();
+        const result = await dispatch(refreshTokenAsync({ refresh })).unwrap();
 
         // Повторяем исходный запрос с новым access токеном
         return await apiFunction(result.access);
@@ -42,4 +40,3 @@ export const withReauth = async <T>(
     throw error;
   }
 };
-

@@ -1,12 +1,9 @@
-import { useState, useMemo, useCallback } from 'react';
-import { useAppDispatch, useAppSelector } from '@/store/store';
-import { Track } from '@/components/sharedTypes/track';
-import {
-  addTrackToFavorite,
-  removeTrackFromFavorite,
-} from '@/api/tracksApi';
+import { addTrackToFavorite, removeTrackFromFavorite } from '@/api/tracksApi';
+import { Track } from '@/types/track';
 import { addLikedTrack, removeLikedTrack } from '@/store/features/trackSlice';
+import { useAppDispatch, useAppSelector } from '@/store/store';
 import { withReauth } from '@/utils/withReauth';
+import { useCallback, useMemo, useState } from 'react';
 
 type ReturnTypeHook = {
   isLoading: boolean;
@@ -48,30 +45,49 @@ export const useLikeTrack = (track: Track | null): ReturnTypeHook => {
       return setErrorMsg('Трек не выбран');
     }
 
-    const actionApi = isLike ? removeTrackFromFavorite : addTrackToFavorite;
-    const actionSlice = isLike ? removeLikedTrack : addLikedTrack;
-
     setIsLoading(true);
     setErrorMsg(null);
 
-    withReauth(
-      (newToken) => actionApi(newToken || accessToken, track._id),
-      refreshToken,
-      dispatch,
-    )
-      .then(() => {
-        dispatch(actionSlice(track));
-      })
-      .catch((error) => {
-        if (error instanceof Error) {
-          setErrorMsg(error.message);
-        } else {
-          setErrorMsg('Произошла неизвестная ошибка');
-        }
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
+    if (isLike) {
+      withReauth(
+        (newToken) =>
+          removeTrackFromFavorite(newToken || accessToken, track._id),
+        refreshToken,
+        dispatch,
+      )
+        .then(() => {
+          dispatch(removeLikedTrack(track));
+        })
+        .catch((error) => {
+          if (error instanceof Error) {
+            setErrorMsg(error.message);
+          } else {
+            setErrorMsg('Произошла неизвестная ошибка');
+          }
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    } else {
+      withReauth(
+        (newToken) => addTrackToFavorite(newToken || accessToken, track._id),
+        refreshToken,
+        dispatch,
+      )
+        .then(() => {
+          dispatch(addLikedTrack(track));
+        })
+        .catch((error) => {
+          if (error instanceof Error) {
+            setErrorMsg(error.message);
+          } else {
+            setErrorMsg('Произошла неизвестная ошибка');
+          }
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    }
   }, [accessToken, refreshToken, track, isLike, dispatch]);
 
   return {
@@ -81,4 +97,3 @@ export const useLikeTrack = (track: Track | null): ReturnTypeHook => {
     isLike,
   };
 };
-
