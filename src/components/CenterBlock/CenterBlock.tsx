@@ -134,7 +134,7 @@ export const CenterBlock = () => {
               ))
             ) : (
               <div className={styles.centerblock__empty}>
-                Треки не найдены. Попробуйте изменить фильтры.
+                Нет подходящих треков
               </div>
             )}
           </div>

@@ -2,15 +2,17 @@
 
 import { getFavoriteTracks } from '@/api/tracksApi';
 import styles from '@/components/CenterBlock/CenterBlock.module.css';
+import { Filter } from '@/components/Filter/Filter';
 import { MainLayout } from '@/components/MainLayout/MainLayout';
 import { Search } from '@/components/Search/Search';
 import { Track } from '@/components/Track/Track';
 import { restoreAuth } from '@/store/features/authSlice';
 import { setFavoriteTracks, setPlaylist } from '@/store/features/trackSlice';
 import { useAppDispatch, useAppSelector } from '@/store/store';
+import { FilterState } from '@/types/filter';
 import { Track as TrackType } from '@/types/track';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export default function MyPlaylist() {
   const router = useRouter();
@@ -21,6 +23,12 @@ export default function MyPlaylist() {
   );
   const [searchQuery, setSearchQuery] = useState('');
   const [isAuthChecked, setIsAuthChecked] = useState(false);
+  const [filterState, setFilterState] = useState<FilterState>({
+    selectedAuthors: [],
+    selectedGenres: [],
+    selectedYears: [],
+    sortOrder: 'default',
+  });
 
   // Восстанавливаем авторизацию при монтировании
   useEffect(() => {
@@ -79,17 +87,60 @@ export default function MyPlaylist() {
     }
   }, [favoriteTracks, dispatch]);
 
-  // Фильтрация треков по поисковому запросу
-  const filteredTracks = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return favoriteTracks;
+  // Обработчик изменения фильтров
+  const handleFilterChange = useCallback((filters: FilterState) => {
+    setFilterState(filters);
+  }, []);
+
+  // Комбинированная фильтрация: поиск + фильтры + сортировка
+  const filteredAndSortedTracks = useMemo(() => {
+    let filtered = [...favoriteTracks];
+
+    // Фильтрация по поисковому запросу (частичное совпадение, регистронезависимое)
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter((track: TrackType) =>
+        track.name.toLowerCase().includes(query),
+      );
     }
 
-    const query = searchQuery.toLowerCase().trim();
-    return favoriteTracks.filter((track: TrackType) =>
-      track.name.toLowerCase().includes(query),
-    );
-  }, [favoriteTracks, searchQuery]);
+    // Фильтрация по исполнителям
+    if (filterState.selectedAuthors.length > 0) {
+      filtered = filtered.filter((track: TrackType) =>
+        filterState.selectedAuthors.includes(track.author),
+      );
+    }
+
+    // Фильтрация по жанрам
+    if (filterState.selectedGenres.length > 0) {
+      filtered = filtered.filter((track: TrackType) =>
+        track.genre.some((genre) => filterState.selectedGenres.includes(genre)),
+      );
+    }
+
+    // Фильтрация по годам
+    if (filterState.selectedYears.length > 0) {
+      filtered = filtered.filter((track: TrackType) => {
+        const trackYear = track.release_date.split('-')[0];
+        return filterState.selectedYears.includes(trackYear);
+      });
+    }
+
+    // Сортировка
+    if (filterState.sortOrder !== 'default') {
+      filtered.sort((a, b) => {
+        const dateA = new Date(a.release_date).getTime();
+        const dateB = new Date(b.release_date).getTime();
+        if (filterState.sortOrder === 'oldest') {
+          return dateA - dateB;
+        } else {
+          return dateB - dateA;
+        }
+      });
+    }
+
+    return filtered;
+  }, [favoriteTracks, filterState, searchQuery]);
 
   // Если еще не проверили авторизацию или не авторизован, не показываем контент
   if (!isAuthChecked || !isAuthenticated) {
@@ -106,6 +157,7 @@ export default function MyPlaylist() {
     <MainLayout>
       <div className={styles.centerblock}>
         <Search value={searchQuery} onChange={setSearchQuery} />
+        <Filter tracks={favoriteTracks} onFilterChange={handleFilterChange} />
         <h2 className={styles.centerblock__h2}>Мои треки</h2>
 
         {favoriteTracks.length === 0 ? (
@@ -121,13 +173,13 @@ export default function MyPlaylist() {
           <div className={styles.centerblock__content}>
             <div className={styles.content__playlist}>
               <Track isHeader={true} />
-              {filteredTracks.length > 0 ? (
-                filteredTracks.map((track) => (
+              {filteredAndSortedTracks.length > 0 ? (
+                filteredAndSortedTracks.map((track) => (
                   <Track key={track._id} track={track} />
                 ))
               ) : (
                 <div className={styles.centerblock__empty}>
-                  Треки не найдены. Попробуйте изменить поисковый запрос.
+                  Нет подходящих треков
                 </div>
               )}
             </div>
