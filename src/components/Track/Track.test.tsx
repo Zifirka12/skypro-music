@@ -1,3 +1,4 @@
+import React from 'react';
 import { authSliceReducer } from '@/store/features/authSlice';
 import { trackSliceReducer } from '@/store/features/trackSlice';
 import { Track as TrackType } from '@/types/track';
