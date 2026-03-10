@@ -1,4 +1,4 @@
-# Skypro Music 🎵
+# Skypro Music 🎵 №6
 
 Музыкальный сервис, созданный с использованием Next.js, TypeScript и Redux Toolkit.
 
