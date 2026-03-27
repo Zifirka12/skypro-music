@@ -1,80 +1,145 @@
-import cn from 'classnames';
+'use client';
+
+import { getFavoriteTracks } from '@/api/tracksApi';
+import { fetchAllTracks, setFavoriteTracks } from '@/store/features/trackSlice';
+import { useAppDispatch, useAppSelector } from '@/store/store';
+import { FilterState } from '@/types/filter';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Filter } from '../Filter/Filter';
+import { Search } from '../Search/Search';
+import { Track as TrackComponent } from '../Track/Track';
 import styles from './CenterBlock.module.css';
 
 export const CenterBlock = () => {
+  const dispatch = useAppDispatch();
+  const { playlist, isLoading, error, favoriteTracks } = useAppSelector(
+    (state) => state.tracks,
+  );
+  const { accessToken, isAuthenticated } = useAppSelector(
+    (state) => state.auth,
+  );
+  const [filterState, setFilterState] = useState<FilterState>({
+    selectedAuthors: [],
+    selectedGenres: [],
+    selectedYears: [],
+    sortOrder: 'default',
+  });
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Загружаем треки с сервера при монтировании компонента
+  useEffect(() => {
+    dispatch(fetchAllTracks());
+  }, [dispatch]);
+
+  // Загружаем избранные треки только если они еще не загружены
+  useEffect(() => {
+    const loadFavoriteTracks = async () => {
+      if (isAuthenticated && accessToken && favoriteTracks.length === 0) {
+        try {
+          const tracks = await getFavoriteTracks(accessToken);
+          dispatch(setFavoriteTracks(tracks));
+        } catch (error) {
+          // Ошибка загрузки избранных треков обработана
+        }
+      }
+    };
+
+    loadFavoriteTracks();
+  }, [isAuthenticated, accessToken, dispatch, favoriteTracks.length]);
+
+  // Обработчик изменения фильтров
+  const handleFilterChange = useCallback((filters: FilterState) => {
+    setFilterState(filters);
+  }, []);
+
+  // Мемоизируем проверку и преобразование playlist в массив
+  const allTracks = useMemo(
+    () => (Array.isArray(playlist) ? playlist : []),
+    [playlist],
+  );
+
+  // Применяем фильтры, поиск и сортировку
+  const filteredAndSortedTracks = useMemo(() => {
+    let filtered = [...allTracks];
+
+    // Фильтрация по поисковому запросу (частичное совпадение, регистронезависимое)
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter((track) =>
+        track.name.toLowerCase().includes(query),
+      );
+    }
+
+    // Фильтрация по исполнителям
+    if (filterState.selectedAuthors.length > 0) {
+      filtered = filtered.filter((track) =>
+        filterState.selectedAuthors.includes(track.author),
+      );
+    }
+
+    // Фильтрация по жанрам
+    if (filterState.selectedGenres.length > 0) {
+      filtered = filtered.filter((track) =>
+        track.genre.some((genre) => filterState.selectedGenres.includes(genre)),
+      );
+    }
+
+    // Фильтрация по годам
+    if (filterState.selectedYears.length > 0) {
+      filtered = filtered.filter((track) => {
+        const trackYear = track.release_date.split('-')[0];
+        return filterState.selectedYears.includes(trackYear);
+      });
+    }
+
+    // Сортировка
+    if (filterState.sortOrder !== 'default') {
+      filtered.sort((a, b) => {
+        const dateA = new Date(a.release_date).getTime();
+        const dateB = new Date(b.release_date).getTime();
+        if (filterState.sortOrder === 'oldest') {
+          return dateA - dateB;
+        } else {
+          return dateB - dateA;
+        }
+      });
+    }
+
+    return filtered;
+  }, [allTracks, filterState, searchQuery]);
+
   return (
     <div className={styles.centerblock}>
-      <div className={styles.centerblock__search}>
-        <svg className={styles.search__svg}>
-          <use xlinkHref="/img/icon/sprite.svg#icon-search"></use>
-        </svg>
-        <input
-          className={styles.search__text}
-          type="search"
-          placeholder="Поиск"
-          name="search"
-        />
-      </div>
+      <Search value={searchQuery} onChange={setSearchQuery} />
+      <Filter tracks={allTracks} onFilterChange={handleFilterChange} />
       <h2 className={styles.centerblock__h2}>Треки</h2>
-      <div className={styles.centerblock__filter}>
-        <div className={styles.filter__title}>Искать по:</div>
-        <div className={styles.filter__button}>исполнителю</div>
-        <div className={styles.filter__button}>году выпуска</div>
-        <div className={styles.filter__button}>жанру</div>
-      </div>
-      <div className={styles.centerblock__content}>
-        <div className={styles.content__title}>
-          <div className={cn(styles.playlistTitle__col, styles.col01)}>
-            Трек
-          </div>
-          <div className={cn(styles.playlistTitle__col, styles.col02)}>
-            Исполнитель
-          </div>
-          <div className={cn(styles.playlistTitle__col, styles.col03)}>
-            Альбом
-          </div>
-          <div className={cn(styles.playlistTitle__col, styles.col04)}>
-            <svg className={styles.playlistTitle__svg}>
-              <use xlinkHref="/img/icon/sprite.svg#icon-watch"></use>
-            </svg>
+
+      {isLoading && (
+        <div className={styles.centerblock__loading}>Загрузка треков...</div>
+      )}
+
+      {error && (
+        <div className={styles.centerblock__error}>
+          Ошибка загрузки: {error}
+        </div>
+      )}
+
+      {!isLoading && !error && (
+        <div className={styles.centerblock__content}>
+          <div className={styles.content__playlist}>
+            <TrackComponent isHeader={true} />
+            {filteredAndSortedTracks.length > 0 ? (
+              filteredAndSortedTracks.map((track) => (
+                <TrackComponent key={track._id} track={track} />
+              ))
+            ) : (
+              <div className={styles.centerblock__empty}>
+                Нет подходящих треков
+              </div>
+            )}
           </div>
         </div>
-        <div className={styles.content__playlist}>
-          {/* Здесь будет список треков - пока оставляем заглушку */}
-          <div className={styles.playlist__item}>
-            <div className={styles.playlist__track}>
-              <div className={styles.track__title}>
-                <div className={styles.track__titleImage}>
-                  <svg className={styles.track__titleSvg}>
-                    <use xlinkHref="/img/icon/sprite.svg#icon-note"></use>
-                  </svg>
-                </div>
-                <div className={styles['track__title-text']}>
-                  <a className={styles.track__titleLink} href="">
-                    Guilt <span className={styles.track__titleSpan}></span>
-                  </a>
-                </div>
-              </div>
-              <div className={styles.track__author}>
-                <a className={styles.track__authorLink} href="">
-                  Nero
-                </a>
-              </div>
-              <div className={styles.track__album}>
-                <a className={styles.track__albumLink} href="">
-                  Welcome Reality
-                </a>
-              </div>
-              <div className={styles.track__time}>
-                <svg className={styles.track__timeSvg}>
-                  <use xlinkHref="/img/icon/sprite.svg#icon-like"></use>
-                </svg>
-                <span className={styles.track__timeText}>4:44</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   );
 };
